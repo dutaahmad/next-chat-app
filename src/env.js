@@ -30,7 +30,9 @@ export const env = createEnv({
     ),
     DISCORD_CLIENT_ID: z.string(),
     DISCORD_CLIENT_SECRET: z.string(),
-
+    GITHUB_APP_ID: z.string(),
+    GITHUB_CLIENT_ID: z.string(),
+    GITHUB_APP_SECRET: z.string(),
     REDIS_HOST: z.string(),
     REDIS_PORT: z
       .string()
@@ -61,6 +63,9 @@ export const env = createEnv({
     REDIS_HOST: process.env.REDIS_HOST,
     REDIS_PORT: process.env.REDIS_PORT,
     REDIS_PASSWORD: process.env.REDIS_PASSWORD,
+    GITHUB_APP_ID: process.env.GITHUB_APP_ID,
+    GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID,
+    GITHUB_APP_SECRET: process.env.GITHUB_APP_SECRET,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
