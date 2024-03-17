@@ -49,64 +49,70 @@ export const users = createTable("user", {
   image: varchar("image", { length: 255 }),
 });
 
+export const usersRelations = relations(users, ({ many }) => ({
+  accounts: many(accounts),
+}));
+
+// message table / entity
 export const message = createTable("message", {
   id: uuid("id").notNull().primaryKey(),
   sender_id: varchar("id", { length: 255 })
     .notNull()
     .references(() => users.id),
-  content: varchar("content", { length: 500 }),
+  content: varchar("content", { length: 500 }).notNull(),
   created_at: timestamp("created_at")
     .default(sql`CURRENT_TIMESTAMP`)
     .notNull(),
+  recipient_id: varchar("id", { length: 255 })
+    .notNull()
+    .references(() => users.id),
 });
 
-export const usersMessagesRelations = relations(users, ({ many }) => ({
-  message: many(message),
+export const usersMessageRelations = relations(users, ({ many }) => ({
+  sentMessages: many(message),
+  receivedMessages: many(message),
 }));
 
-export const messageUserRelations = relations(message, ({ one }) => ({
-  user: one(users, { fields: [message.sender_id], references: [users.id] }),
+export const messageUsersRelations = relations(message, ({ one }) => ({
+  sender: one(users, { fields: [message.sender_id], references: [users.id] }),
+  recipient: one(users, { fields: [message.recipient_id], references: [users.id] }),
 }));
 
-export const recipients = createTable(
-  "recipients",
-  {
-    message_id: uuid("message_id")
-      .notNull()
-      .references(() => message.id),
-    recipient_id: varchar("id", { length: 255 })
-      .notNull()
-      .references(() => users.id),
-  },
-  (t) => ({
-    pk: primaryKey({
-      columns: [t.message_id, t.recipient_id],
-    }),
-  }),
-);
+// // recipients table / entity (many-to-many relationship)
+// export const recipients = createTable(
+//   "recipients",
+//   {
+//     // id: uuid("id").primaryKey(),
+//     message_id: uuid("message_id")
+//       .notNull()
+//       .references(() => message.id),
+//     user_recipient_id: varchar("id", { length: 255 })
+//       .notNull()
+//       .references(() => users.id),
+//   },
+//   (table) => ({
+//     pk: primaryKey({
+//       columns: [table.message_id, table.user_recipient_id],
+//     }),
+//     index: unique()
+//   }),
+// );
 
-export const userRecipientsToMessageRelations = relations(recipients, ({ one }) => ({
-  message: one(message, {
-    fields: [recipients.message_id],
-    references: [message.id]
-  }),
-  userRecipient: one(users, {
-    fields: [recipients.recipient_id],
-    references: [users.id]
-  })
-}))
+// // Define relationships
+// export const usersRecipientRelations = relations(users, ({ many }) => ({
+//   sentMessages: many(message),
+//   receivedMessages: many(recipients),
+// }));
 
-export const userToRecipientsRelations = relations(users, ({ many }) => ({
-  recipients: many(recipients)
-}))
+// export const messagesRelations = relations(message, ({ one, many }) => ({
+//   sender: one(users, { fields: [message.sender_id], references: [users.id] }),
+//   recipients: many(recipients),
+// }));
 
-export const messageToRecipientsRelations = relations(message, ({ many }) => ({
-  recipients: many(recipients)
-}))
-
-export const usersRelations = relations(users, ({ many }) => ({
-  accounts: many(accounts),
-}));
+// export const recipientsRelations = relations(recipients, ({ one }) => ({
+//   message: one(message, { fields: [recipients.message_id], references: [message.id] }),
+//   user: one(users, { fields: [recipients.user_recipient_id], references: [users.id] }),
+// }));
 
 export const accounts = createTable(
   "account",
