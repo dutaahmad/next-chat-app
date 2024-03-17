@@ -7,6 +7,7 @@ import {
   serial,
   text,
   timestamp,
+  uuid,
   varchar,
 } from "drizzle-orm/pg-core";
 import { type AdapterAccount } from "next-auth/adapters";
@@ -35,7 +36,7 @@ export const posts = createTable(
   (example) => ({
     createdByIdIdx: index("createdById_idx").on(example.createdById),
     nameIndex: index("name_idx").on(example.name),
-  })
+  }),
 );
 
 export const users = createTable("user", {
@@ -47,6 +48,61 @@ export const users = createTable("user", {
   }).default(sql`CURRENT_TIMESTAMP`),
   image: varchar("image", { length: 255 }),
 });
+
+export const message = createTable("message", {
+  id: uuid("id").notNull().primaryKey(),
+  sender_id: varchar("id", { length: 255 })
+    .notNull()
+    .references(() => users.id),
+  content: varchar("content", { length: 500 }),
+  created_at: timestamp("created_at")
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+});
+
+export const usersMessagesRelations = relations(users, ({ many }) => ({
+  message: many(message),
+}));
+
+export const messageUserRelations = relations(message, ({ one }) => ({
+  user: one(users, { fields: [message.sender_id], references: [users.id] }),
+}));
+
+export const recipients = createTable(
+  "recipients",
+  {
+    message_id: uuid("message_id")
+      .notNull()
+      .references(() => message.id),
+    recipient_id: varchar("id", { length: 255 })
+      .notNull()
+      .references(() => users.id),
+  },
+  (t) => ({
+    pk: primaryKey({
+      columns: [t.message_id, t.recipient_id],
+    }),
+  }),
+);
+
+export const userRecipientsToMessageRelations = relations(recipients, ({ one }) => ({
+  message: one(message, {
+    fields: [recipients.message_id],
+    references: [message.id]
+  }),
+  userRecipient: one(users, {
+    fields: [recipients.recipient_id],
+    references: [users.id]
+  })
+}))
+
+export const userToRecipientsRelations = relations(users, ({ many }) => ({
+  recipients: many(recipients)
+}))
+
+export const messageToRecipientsRelations = relations(message, ({ many }) => ({
+  recipients: many(recipients)
+}))
 
 export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),
@@ -76,7 +132,7 @@ export const accounts = createTable(
       columns: [account.provider, account.providerAccountId],
     }),
     userIdIdx: index("account_userId_idx").on(account.userId),
-  })
+  }),
 );
 
 export const accountsRelations = relations(accounts, ({ one }) => ({
@@ -96,7 +152,7 @@ export const sessions = createTable(
   },
   (session) => ({
     userIdIdx: index("session_userId_idx").on(session.userId),
-  })
+  }),
 );
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({
@@ -112,5 +168,5 @@ export const verificationTokens = createTable(
   },
   (vt) => ({
     compoundKey: primaryKey({ columns: [vt.identifier, vt.token] }),
-  })
+  }),
 );
